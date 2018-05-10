@@ -17,7 +17,7 @@
 import dat from 'dat.gui';
 import * as tf from '@tensorflow/tfjs-core';
 import * as posenet from '../src';
-import { drawKeypoints, drawSkeleton, renderImageToCanvas } from './demo_util';
+import { drawKeypoints, drawSkeleton, renderImageToCanvas, blockPenisArea } from './demo_util';
 
 const images = [
     'frisbee.jpg',
@@ -47,7 +47,7 @@ const images = [
 ];
 
 /**
- * Draws a pose if it passes a minimum confidence onto a canvas. 
+ * Draws a pose if it passes a minimum confidence onto a canvas.
  * Only the pose's keypoints that pass a minPartConfidence are drawn.
  */
 function drawResults(canvas, poses,
@@ -55,11 +55,16 @@ function drawResults(canvas, poses,
     renderImageToCanvas(image, [513, 513], canvas);
     poses.forEach((pose) => {
         if (pose.score >= minPoseConfidence) {
+            blockPenisArea(pose.keypoints,
+                minPartConfidence, canvas.getContext('2d'));
+
             drawKeypoints(pose.keypoints,
                 minPartConfidence, canvas.getContext('2d'));
 
             drawSkeleton(pose.keypoints,
                 minPartConfidence, canvas.getContext('2d'));
+
+
         }
     });
 }
@@ -165,7 +170,7 @@ function disposeModelOutputs() {
 }
 
 /**
- * Loads an image, feeds it into posenet the posenet model, and 
+ * Loads an image, feeds it into posenet the posenet model, and
  * calculates poses based on the model outputs
  */
 async function testImageAndEstimatePoses(net) {
@@ -181,7 +186,7 @@ async function testImageAndEstimatePoses(net) {
     // Creates a tensor from an image
     const input = tf.fromPixels(image);
 
-    // Stores the raw model outputs from both single- and multi-pose resutls can 
+    // Stores the raw model outputs from both single- and multi-pose resutls can
     // be decoded
     modelOutputs = await net.predictForMultiPose(input, guiState.outputStride);
 
@@ -217,8 +222,8 @@ function setupGui(net) {
     };
 
     const gui = new dat.GUI();
-    // Output stride:  Internally, this parameter affects the height and width of the layers 
-    // in the neural network. The lower the value of the output stride the higher the accuracy 
+    // Output stride:  Internally, this parameter affects the height and width of the layers
+    // in the neural network. The lower the value of the output stride the higher the accuracy
     // but slower the speed, the higher the value the faster the speed but lower the accuracy.
     gui.add(guiState, 'outputStride', [32, 16, 8])
         .onChange((outputStride) => guiState.outputStride =
@@ -226,9 +231,9 @@ function setupGui(net) {
     gui.add(guiState, 'image', images);
     gui.add(guiState, 'detectPoseButton');
 
-    // Pose confidence: the overall confidence in the estimation of a person's 
+    // Pose confidence: the overall confidence in the estimation of a person's
     // pose (i.e. a person detected in a frame)
-    // Min part confidence: the confidence that a particular estimated keypoint 
+    // Min part confidence: the confidence that a particular estimated keypoint
     // position is accurate (i.e. the elbow's position)
 
     const multiPoseDetection = gui.addFolder('Multi Pose Estimation');

@@ -18,7 +18,7 @@ import dat from 'dat.gui';
 import Stats from 'stats.js';
 import * as posenet from '../src';
 
-import { drawKeypoints, drawSkeleton } from './demo_util';
+import { drawKeypoints, drawSkeleton, blockPenisArea } from './demo_util';
 const maxVideoSize = 513;
 const canvasSize = 400;
 const stats = new Stats();
@@ -95,6 +95,7 @@ const guiState = {
     showVideo: true,
     showSkeleton: true,
     showPoints: true,
+    blockPenis: true,
   },
   net: null,
 };
@@ -157,6 +158,7 @@ function setupGui(cameras, net) {
   output.add(guiState.output, 'showVideo');
   output.add(guiState.output, 'showSkeleton');
   output.add(guiState.output, 'showPoints');
+  output.add(guiState.output, 'blockPenis');
   output.open();
 
 
@@ -193,7 +195,7 @@ function setupFPS() {
 function detectPoseInRealTime(video, net) {
   const canvas = document.getElementById('output');
   const ctx = canvas.getContext('2d');
-  const flipHorizontal = true; // since images are being fed from a webcam
+  const flipHorizontal = false; // since images are being fed from a webcam
 
   canvas.width = canvasSize;
   canvas.height = canvasSize;
@@ -258,6 +260,9 @@ function detectPoseInRealTime(video, net) {
     // scores
     poses.forEach(({ score, keypoints }) => {
       if (score >= minPoseConfidence) {
+        if (guiState.output.blockPenis) {
+          blockPenisArea(keypoints, minPartConfidence, ctx, scale);
+        }
         if (guiState.output.showPoints) {
           drawKeypoints(keypoints, minPartConfidence, ctx, scale);
         }

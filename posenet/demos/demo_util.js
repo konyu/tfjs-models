@@ -68,6 +68,58 @@ export function drawKeypoints(keypoints, minConfidence, ctx, scale = 1) {
   }
 }
 
+export function blockPenisArea(keypoints, minConfidence, ctx, scale = 1) {
+  let leftHip, rightHip, leftKnee, rightKnee;
+  for (let i = 0; i < keypoints.length; i++) {
+    const keypoint = keypoints[i];
+
+    if (keypoint.score < minConfidence) {
+      continue;
+    }
+    // keypoints.partがいくつかある
+    const { y, x } = keypoint.position;
+    if(keypoint.part == "leftHip"){
+      leftHip = keypoint;
+    }else if (keypoint.part == "rightHip") {
+      rightHip = keypoint;
+    }else if (keypoint.part == "leftKnee") {
+      leftKnee = keypoint;
+    }else if (keypoint.part == "rightKnee") {
+      rightKnee = keypoint;
+    }
+  }
+
+  if(leftHip !== undefined && rightHip !== undefined && leftKnee !== undefined && rightKnee  !== undefined) {
+    let width;
+    let height;
+    let x;
+    let y;
+
+    width = Math.ceil((leftHip.position.x - rightHip.position.x) * scale);
+    height = Math.ceil((leftKnee.position.y - leftHip.position.y) * 0.6 * scale);
+    x = Math.ceil(rightHip.position.x * scale);
+    y = Math.ceil(rightHip.position.y * scale);
+
+    mosic(x, y, width, height, ctx);
+  }
+}
+
+export function mosic(start_x, start_y, width, height, ctx, size = 10) {
+  console.log("do mosic!!");
+  const data = ctx.getImageData(start_x, start_y, width, height).data;
+  for (let y = 0; y < height; y += size) {
+    for (let x = 0; x < width; x += size) {
+      const cR = data[(y * width + x) * 4];
+      const cG = data[(y * width + x) * 4 + 1];
+      const cB = data[(y * width + x) * 4 + 2];
+      ctx.beginPath();
+      ctx.fillStyle = `rgb(${cR},${cG},${cB})`;
+      ctx.fillRect(start_x + x, start_y + y, size, size);
+    }
+  }
+}
+
+
 /**
  * Draw the bounding box of a pose. For example, for a whole person standing
  * in an image, the bounding box will begin at the nose and extend to one of
